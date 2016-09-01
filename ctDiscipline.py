@@ -54,6 +54,7 @@ def discipline():
                             ON course.period_id=period.id
                             WHERE semester_id=?
                             ''',(semester_id,));
+
     except:
         print 'There is not currently a course in session.'
         raw_input( 'Press any key to continue...' )
@@ -64,11 +65,11 @@ def discipline():
     chkit = 'stay'
     course_id = -1
 
-    courses = list()
+    courseID = list()
     try:
         for crs in courses:
             print crs
-            courses.append(crs[0])
+            courseID.append(crs[0])
             timeFirst = crs[6]
             timeLast = crs[7]
             timeFirst = datetime.datetime.strptime(timeFirst, '%H:%M:%S.%f').time()
@@ -87,7 +88,10 @@ def discipline():
     while course_id == -1:
         print '\nNo course is currently in session.'
         course_id = raw_input('\nEnter the course id for which you would like to make a report: ')
-        if course_id not in courses:
+        course_id = int(course_id)
+        print 'You entered: ',course_id
+        print 'Current courses: ',courseID
+        if course_id not in courseID:
             print '\nYou have entered an invalid course id. Please try again.\n'
             course_id = -1
 
@@ -96,21 +100,23 @@ def discipline():
 
         # Now grab the student roster for the current course_id
         students = ct.execute('''
-            SELECT e.id, s.nameLast, s.nameFirst
-            FROM enroll as e AND student as s
+            SELECT e.id, e.course_id, s.nameLast, s.nameFirst
+            FROM enroll as e JOIN student as s
             ON e.student_id = s.id
             WHERE e.course_id=? ''',(course_id,));
-        passes = {}
-        enrollees = []
+
+        enrollees = {}
         for pupil in students:
-            print pupil[0],': ',pupil[1],', ',pupil[2]
-            passes[pupil[0]] = pupil[3]
-            enrollees.append(pupil[0])
+            print pupil[0],': ',pupil[2],', ',pupil[3]
 
+            enrollees[pupil[0]] = (pupil[2], pupil[3])
+            print pupil[0], enrollees[pupil[0]]
         enroll_id = raw_input('\n\nDiscipline Report for which student? ')
-
+        enroll_id = int(enroll_id)
+        print enroll_id
         try:
-            print 'You have selected student number: ',enrollees[enroll_id]
+            print 'You have selected student number: '
+            print enroll_id, enrollees[enroll_id]
         except:
                 'The student you entered is not in our records. Please try again.'
                 chkit = 'stay'
@@ -119,8 +125,77 @@ def discipline():
         os.system('clear')
 
         # Print the students information to date
+        # Print incidentTotals
+
+        incTotals = ct.execute('''
+            SELECT * FROM incidentTotals
+            JOIN typeIncident
+            ON incidentTotals.typeIncident_id=typeIncident.id
+            WHERE incidentTotals.enroll_id=?
+            ''',(enroll_id,));
 
 
+        for item in incTotals:
+            if len(item) > 0 :
+                print item
+            else:
+                print '\nThis student has no prior classroom incidents.\n\n'
+
+        response = raw_input('\n\nWould you like to report a new incident for this student? (Y/N)')
+
+        if response == 'Y' or response == 'y':
+            os.system('clear')
+
+            incidentList = ct.execute('''
+            SELECT * FROM typeIncident
+            ''');
+
+            for item in incidentList:
+                print item[0],item[1]
+
+            incID = int(raw_input('\nPlease enter the incident ID you would like to report: '));
+
+            incDate = raw_input('\nPlease enter the date of the incident: (mm/dd/yyyy)');
+            if incDate == 'n': incDate = str(dateNow)
+
+            incTime = raw_input('\nPlease enter the time of the incident: (hh:mm)');
+            if incTime == 'n': incTime = str(timeNow)
+
+            incComment = raw_input('\nPlease enter a short description or comment about the incident: ');
+
+            # Write the incident to the database
+
+            ct.execute("""
+            INSERT OR IGNORE INTO classIncident(incDate,incTime,enroll_id,typeincident_id,comment)
+            VALUES (?, ?, ?, ?, ?)""",(incDate,incTime,enroll_id,incID,incComment));
+
+            # Now update the incident totals report
+            try:
+                newCount = 0
+                incToUpdate = ct.execute("""
+                            SELECT * FROM incidentTotals
+                            WHERE (typeIncident_id = ? AND enroll_id = ?)
+                            """,(incID,enroll_id));
+                for item in incToUpdate:
+                    newCount = item[3]+1
+                ct.execute("""
+                UPDATE incidentTotals
+                SET counts = ?
+                WHERE (typeIncident_id = ? AND enroll_id = ?)
+                """,(newCount,incID,enroll_id));
+            except:
+                ct.execute("""
+                INSERT OR IGNORE INTO incidentTotals(enroll_id,typeincident_id,counts)
+                VALUES (?,?,?)
+                """, (enroll_id,incID,1));
+            chkit = 'end'
+
+
+
+        else:
+            chkit = 'end'
+            print 'Returning to main menu.'
+            continue
 
 
 #----------------------END MODULE-----------------------------------------------

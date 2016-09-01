@@ -19,8 +19,10 @@ import ctAttendance
 import ctEnrollment
 import ctRestroom
 import ctDiscipline
+import ctParentContact
 import ctGrades
 import ctSetup
+import ctReports
 import os
 #
 # Clear the screen before beginning
@@ -36,8 +38,11 @@ while True:
     print '3. ENROLLMENT'
     print '4. RESTROOM'
     print '5. DISCIPLINE'
-    print '6. GRADES'
-    print '7. SETUP'
+    print '6. PARENT CONTACT'
+    print '7. GRADES'
+    print '8. SETUP'
+    print '9. REPORT'
+
     choiceMain = raw_input ('\nEnter number of choice: ');
 
     if choiceMain   == '1':
@@ -51,9 +56,13 @@ while True:
     elif choiceMain == '5':
         ctDiscipline.discipline()
     elif choiceMain == '6':
-        ctGrades.grades()
+        ctParentContact.parentContact()
     elif choiceMain == '7':
+        ctGrades.grades()
+    elif choiceMain == '8':
         ctSetup.setup()
+    elif choiceMain == '9':
+        ctReports.reports()
     else:
         break
     continue
