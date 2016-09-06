@@ -23,6 +23,7 @@ import ctParentContact
 import ctGrades
 import ctSetup
 import ctReports
+import ctReferral
 import os
 #
 # Clear the screen before beginning
@@ -42,6 +43,7 @@ while True:
     print '7. GRADES'
     print '8. SETUP'
     print '9. REPORT'
+    print '10. BEHAVIOR REFERRAL'
 
     choiceMain = raw_input ('\nEnter number of choice: ');
 
@@ -63,19 +65,10 @@ while True:
         ctSetup.setup()
     elif choiceMain == '9':
         ctReports.reports()
+    elif choiceMain == '10':
+        ctReferral.behaviorReferral()
     else:
         break
     continue
-
-
-
-
-
-
-
-
-
-
-
 
 #-------------------------------------------------------------------------------
